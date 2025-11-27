@@ -25,23 +25,33 @@ export default function Setup2FAPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        cache: 'no-store', // No cachear en producción
       });
+      
       const data = await response.json();
 
       if (response.ok) {
-        setQrCodeUrl(data.qrCodeUrl);
-        setSecret(data.secret);
+        if (data.qrCodeUrl) {
+          setQrCodeUrl(data.qrCodeUrl);
+          setSecret(data.secret);
+        } else {
+          setError('No se pudo generar el código QR. Por favor intenta de nuevo.');
+        }
       } else {
-        setError(data.error || 'Error al cargar configuración 2FA');
+        const errorMsg = data.error || data.message || 'Error al cargar configuración 2FA';
+        setError(errorMsg);
+        
         // Si no está autenticado, redirigir al login
         if (response.status === 401) {
+          setError(`${errorMsg}. Redirigiendo al login...`);
           setTimeout(() => {
             router.push('/login');
           }, 2000);
         }
       }
-    } catch (error) {
-      setError('Error de conexión. Por favor intenta de nuevo.');
+    } catch (error: any) {
+      console.error('Error loading QR code:', error);
+      setError('Error de conexión. Por favor verifica tu conexión e intenta de nuevo.');
     } finally {
       setLoadingSetup(false);
     }

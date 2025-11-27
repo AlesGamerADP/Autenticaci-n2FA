@@ -36,6 +36,15 @@ DB_USER=postgres
 DB_PASSWORD=tu-contraseña
 DB_SSL=true
 JWT_SECRET=tu-secreto-super-seguro-cambiar-en-produccion
+
+# Configuración de cookies para producción
+# Si usas HTTP (sin HTTPS), deja en false
+# Si usas HTTPS, cambia a true
+COOKIE_SECURE=false
+# Opciones: lax, strict, none (lax es recomendado)
+COOKIE_SAME_SITE=lax
+# Dominio de la cookie (dejar vacío para usar el dominio actual)
+COOKIE_DOMAIN=
 ```
 
 Para desarrollo local:
@@ -191,6 +200,16 @@ Esto creará:
 - Configura Security Groups correctamente en RDS para permitir solo tu IP
 - Implementa rate limiting para prevenir ataques de fuerza bruta
 - Habilita SSL para todas las conexiones a la base de datos
+
+## Despliegue en EC2
+
+Para desplegar en una instancia EC2 de AWS, consulta el archivo `EC2_SETUP.md` que incluye:
+
+- Configuración de Security Groups
+- Instalación de Docker
+- Variables de entorno necesarias
+- Comandos de despliegue
+- Configuración opcional con Nginx
 
 ## Solución de Problemas
 

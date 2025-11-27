@@ -6,10 +6,29 @@ import { getAuthToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = getAuthToken(request);
+    // Intentar obtener el token de múltiples formas
+    let token = getAuthToken(request);
+    
+    // Si no se encuentra en cookies, intentar desde el header Authorization
     if (!token) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
+
+    if (!token) {
+      // Log para debug en producción
+      console.log('No token found. Cookies:', request.cookies.getAll());
       return NextResponse.json(
-        { error: 'No autenticado' },
+        { 
+          error: 'No autenticado',
+          message: 'Por favor inicia sesión primero',
+          debug: process.env.NODE_ENV === 'development' ? {
+            cookies: Array.from(request.cookies.getAll()).map(c => c.name),
+            hasCookie: request.cookies.has('auth-token')
+          } : undefined
+        },
         { status: 401 }
       );
     }
@@ -50,14 +69,24 @@ export async function GET(request: NextRequest) {
     user.twoFactorSecret = twoFactorSetup.secret;
     await updateUser(user);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       secret: twoFactorSetup.secret,
       qrCodeUrl,
       alreadyConfigured: false,
     });
+
+    // Asegurar que los headers permitan cookies
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Allow-Origin', request.headers.get('origin') || '*');
+    
+    return response;
   } catch (error: any) {
+    console.error('Error en setup 2FA:', error);
     return NextResponse.json(
-      { error: error.message || 'Error al configurar 2FA' },
+      { 
+        error: error.message || 'Error al configurar 2FA',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

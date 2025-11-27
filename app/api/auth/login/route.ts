@@ -61,6 +61,11 @@ export async function POST(request: NextRequest) {
       });
 
       setAuthCookie(response, token);
+      
+      // Headers adicionales para asegurar que las cookies funcionen
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+      response.headers.set('Access-Control-Allow-Origin', request.headers.get('origin') || '*');
+      
       return response;
     }
 
@@ -81,6 +86,11 @@ export async function POST(request: NextRequest) {
     });
 
     setAuthCookie(response, token);
+    
+    // Headers adicionales para asegurar que las cookies funcionen
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Allow-Origin', request.headers.get('origin') || '*');
+    
     return response;
     } catch (authError: any) {
       // Error de autenticación
