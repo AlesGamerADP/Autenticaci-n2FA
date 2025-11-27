@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: llave-auth-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-llave_auth}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSL=${DB_SSL:-true}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+    networks:
+      - llave-network
+
+  db-init:
+    image: node:20-alpine
+    container_name: llave-db-init
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npm install && npx tsx scripts/create-database.ts && npx tsx scripts/init-db.ts"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-llave_auth}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSL=${DB_SSL:-true}
+    networks:
+      - llave-network
+    profiles:
+      - init
+
+networks:
+  llave-network:
+    driver: bridge
+
+# Para desarrollo local con PostgreSQL en Docker (opcional)
+# Descomenta esto si quieres usar PostgreSQL local en lugar de RDS
+#  postgres:
+#    image: postgres:15-alpine
+#    container_name: llave-postgres
+#    environment:
+#      - POSTGRES_DB=llave_auth
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=postgres
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    networks:
+#      - llave-network
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U postgres"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+
+# volumes:
+#   postgres_data:
+

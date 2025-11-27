@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL local para desarrollo
+  postgres:
+    image: postgres:15-alpine
+    container_name: llave-postgres-dev
+    environment:
+      - POSTGRES_DB=llave_auth
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - llave-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Aplicación Next.js en modo desarrollo
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: llave-auth-app-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=llave_auth
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_SSL=false
+      - JWT_SECRET=dev-secret-key-change-in-production
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run dev
+    restart: unless-stopped
+    networks:
+      - llave-network
+
+networks:
+  llave-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
