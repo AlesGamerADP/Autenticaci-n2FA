@@ -28,8 +28,26 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Redirigir a configuración de 2FA
-        router.push('/setup-2fa');
+        // Esperar un momento para que la cookie se establezca
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Verificar que la cookie se estableció
+        const checkResponse = await fetch('/api/auth/debug', {
+          credentials: 'include',
+        });
+        
+        if (checkResponse.ok) {
+          const debugData = await checkResponse.json();
+          if (debugData.tokenValid) {
+            // Redirigir a configuración de 2FA
+            router.push('/setup-2fa');
+          } else {
+            setError('Error: La sesión no se estableció correctamente. Por favor intenta de nuevo.');
+          }
+        } else {
+          // Si el debug falla, intentar de todas formas
+          router.push('/setup-2fa');
+        }
       } else {
         setError(data.error || 'Error al registrar usuario');
       }

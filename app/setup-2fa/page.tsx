@@ -19,6 +19,29 @@ export default function Setup2FAPage() {
 
   const loadQRCode = async () => {
     try {
+      // Primero verificar el estado de autenticación (debug)
+      const debugResponse = await fetch('/api/auth/debug', {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      
+      if (debugResponse.ok) {
+        const debugData = await debugResponse.json();
+        console.log('Debug auth:', debugData);
+        
+        // Si no hay token, el problema es de autenticación
+        if (!debugData.tokenValid) {
+          setError(`No autenticado. Cookies encontradas: ${debugData.cookieNames.join(', ') || 'ninguna'}. Por favor inicia sesión nuevamente.`);
+          setTimeout(() => {
+            router.push('/login');
+          }, 3000);
+          setLoadingSetup(false);
+          return;
+        }
+      }
+
+      // Si hay token válido, intentar cargar el QR
       const response = await fetch('/api/auth/2fa/setup', {
         method: 'GET',
         credentials: 'include', // Incluir cookies

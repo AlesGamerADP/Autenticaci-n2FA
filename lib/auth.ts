@@ -36,6 +36,16 @@ export function setAuthCookie(response: NextResponse, token: string) {
 
   const cookie = serialize(COOKIE_NAME, token, cookieOptions);
   response.headers.set('Set-Cookie', cookie);
+  
+  // Log en desarrollo para debug
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Cookie establecida:', {
+      name: COOKIE_NAME,
+      secure: useSecureCookies,
+      sameSite: getSameSite(),
+      domain: process.env.COOKIE_DOMAIN || 'no domain',
+    });
+  }
 }
 
 export function getAuthToken(request: NextRequest): string | null {

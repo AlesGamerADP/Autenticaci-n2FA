@@ -28,9 +28,25 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Esperar un momento para que la cookie se establezca
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         if (data.requiresTwoFactor) {
-          // Redirigir a verificación 2FA
-          router.push('/verify-2fa');
+          // Verificar que la cookie se estableció antes de redirigir
+          const checkResponse = await fetch('/api/auth/debug', {
+            credentials: 'include',
+          });
+          
+          if (checkResponse.ok) {
+            const debugData = await checkResponse.json();
+            if (debugData.tokenValid) {
+              router.push('/verify-2fa');
+            } else {
+              setError('Error: La sesión no se estableció correctamente. Por favor intenta de nuevo.');
+            }
+          } else {
+            router.push('/verify-2fa');
+          }
         } else {
           // Login completo, redirigir a dashboard
           router.push('/dashboard');
