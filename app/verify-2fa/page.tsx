@@ -17,6 +17,7 @@ export default function Verify2FAPage() {
     try {
       const response = await fetch('/api/auth/2fa/verify', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

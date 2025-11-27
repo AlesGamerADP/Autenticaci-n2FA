@@ -19,7 +19,13 @@ export default function Setup2FAPage() {
 
   const loadQRCode = async () => {
     try {
-      const response = await fetch('/api/auth/2fa/setup');
+      const response = await fetch('/api/auth/2fa/setup', {
+        method: 'GET',
+        credentials: 'include', // Incluir cookies
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       const data = await response.json();
 
       if (response.ok) {
@@ -27,9 +33,15 @@ export default function Setup2FAPage() {
         setSecret(data.secret);
       } else {
         setError(data.error || 'Error al cargar configuración 2FA');
+        // Si no está autenticado, redirigir al login
+        if (response.status === 401) {
+          setTimeout(() => {
+            router.push('/login');
+          }, 2000);
+        }
       }
     } catch (error) {
-      setError('Error de conexión');
+      setError('Error de conexión. Por favor intenta de nuevo.');
     } finally {
       setLoadingSetup(false);
     }
@@ -44,6 +56,7 @@ export default function Setup2FAPage() {
     try {
       const response = await fetch('/api/auth/2fa/verify', {
         method: 'POST',
+        credentials: 'include', // Incluir cookies
         headers: {
           'Content-Type': 'application/json',
         },
@@ -80,10 +93,19 @@ export default function Setup2FAPage() {
       <h1>Configurar 2FA</h1>
       <h2>Escanea el código QR con Google Authenticator</h2>
 
-      {error && <div className="error">{error}</div>}
+      {error && (
+        <div className="error">
+          {error}
+          {error.includes('No autenticado') && (
+            <div style={{ marginTop: '8px', fontSize: '13px' }}>
+              Por favor inicia sesión primero.
+            </div>
+          )}
+        </div>
+      )}
       {success && <div className="success">{success}</div>}
 
-      {qrCodeUrl && (
+      {!error && qrCodeUrl && (
         <div className="qr-code">
           <img src={qrCodeUrl} alt="QR Code para 2FA" />
         </div>
